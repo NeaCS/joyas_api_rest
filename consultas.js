@@ -9,6 +9,8 @@ const pool = new Pool({
   allowExitOnIdle: true,
 });
 
+
+
 const ObtenerJoyas = async ({
   limits = 3,
   order_by = "stock_ASC",
@@ -48,6 +50,33 @@ const ObtenerJoyas = async ({
   }
 };
 
+const ObtenerJoyasConFiltros = async ({precio_min, precio_max, categoria, metal}) => {
+    let filtros = [];
+    const values = [];
+
+    const agregarFiltro = (campo, comparador, valor) => {
+      values.push(valor);
+      const { length } = filtros;
+      filtros.push(`${campo} ${comparador} $${length + 1}`);
+    };
+
+    if (precio_min) agregarFiltro('precio', '>=', precio_min);
+    if (precio_max) agregarFiltro('precio', '<=', precio_max);
+    if (categoria) agregarFiltro('categoria', '=', categoria);
+    if (metal) agregarFiltro('metal', '=', metal);
+
+    let consulta = 'SELECT * FROM inventario';
+
+    if (filtros.length > 0) {
+        filtros = filtros.join(' AND ')
+      consulta += ` WHERE ${filtros}`;
+    }
+
+    const { rows: joyas } = await pool.query(consulta, values);
+    return(joyas);
+}
+
 module.exports = {
   ObtenerJoyas,
+  ObtenerJoyasConFiltros
 };
